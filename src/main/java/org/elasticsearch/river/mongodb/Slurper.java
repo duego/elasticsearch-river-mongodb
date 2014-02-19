@@ -115,7 +115,6 @@ class Slurper implements Runnable {
                             Thread.currentThread().interrupt();
                             break;
                         }
-                        continue;
                     } finally {
                         if (cursor != null) {
                             logger.trace("Closing oplog cursor");
