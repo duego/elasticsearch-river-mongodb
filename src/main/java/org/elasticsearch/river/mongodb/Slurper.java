@@ -107,13 +107,13 @@ class Slurper implements Runnable {
                         logger.warn("Exception while looping in cursor, retry in 10 seconds", ex);
 //                      Thread.currentThread().interrupt();
 //                      break;
-                        startTimestamp=getCurrentOplogTimestamp();
+                        startTimestamp = getCurrentOplogTimestamp();
                         try {
                             Thread.sleep(10000);
                         } catch (Exception sleepex) {
-                            logger.warn("Thread interrupted");
-                            Thread.currentThread().interrupt();
-                            break;
+                            logger.error("Thread interrupted", sleepex);
+//                          Thread.currentThread().interrupt();
+//                          break;
                         }
                     } finally {
                         if (cursor != null) {
