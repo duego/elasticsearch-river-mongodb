@@ -102,24 +102,34 @@ class Slurper implements Runnable {
 
                 // Slurp from oplog
                 DBCursor cursor = null;
-                try {
-                    cursor = oplogCursor(startTimestamp);
-                    if (cursor == null) {
-                        cursor = processFullOplog();
-                    }
-                    while (cursor.hasNext()) {
-                        DBObject item = cursor.next();
-                        processOplogEntry(item, startTimestamp);
-                    }
-                    Thread.sleep(500);
-                } catch (Exception ex) {
-                    logger.warn("Exception while looping in cursor", ex);
-                    Thread.currentThread().interrupt();
-                    break;
-                } finally {
-                    if (cursor != null) {
-                        logger.trace("Closing oplog cursor");
-                        cursor.close();
+                while (true) { //Re-obtain cursor upon disconnection
+                    try {
+                        cursor = oplogCursor(startTimestamp);
+                        if (cursor == null) {
+                            cursor = processFullOplog();
+                        }
+                        while (cursor.hasNext()) {
+                            DBObject item = cursor.next();
+                            processOplogEntry(item, startTimestamp);
+                        }
+                        Thread.sleep(500);
+                    } catch (Exception ex) {
+                        logger.warn("Exception while looping in cursor, retry in 10 seconds", ex);
+//                      Thread.currentThread().interrupt();
+//                      break;
+                        startTimestamp = getCurrentOplogTimestamp();
+                        try {
+                            Thread.sleep(10000);
+                        } catch (Exception sleepex) {
+                            logger.error("Thread interrupted", sleepex);
+//                          Thread.currentThread().interrupt();
+//                          break;
+                        }
+                    } finally {
+                        if (cursor != null) {
+                            logger.trace("Closing oplog cursor");
+                            cursor.close();
+                        }
                     }
                 }
             } catch (MongoInterruptedException mIEx) {
